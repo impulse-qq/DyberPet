@@ -116,6 +116,7 @@ class DyberPetApp(QApplication):
         # Dashboard - others
         self.p.show_dashboard.connect(self.board.show_window)
         self.p.show_chat.connect(self.chat_panel.show_window)
+        self.chat_panel.open_settings.connect(lambda: (self.conp.show_window(), self.conp.switchTo(self.conp.chatSettingsInterface)))
         self.note.noteToLog.connect(self.board.statusInterface._addNote)
         self.p.hp_updated.connect(self.board.statusInterface.StatusCard._updateHP)
         self.p.fv_updated.connect(self.board.statusInterface.StatusCard._updateFV)

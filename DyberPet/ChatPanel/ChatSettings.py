@@ -13,11 +13,13 @@ import DyberPet.settings as settings
 class _LineEditSettingCard(SettingCard):
     """Simple setting card with a LineEdit for text input."""
 
-    def __init__(self, icon, title, content, parent=None):
+    def __init__(self, icon, title, content, echo_mode=None, parent=None):
         super().__init__(icon, title, content, parent)
         self.lineEdit = QLineEdit(self)
         self.lineEdit.setFixedWidth(260)
         self.lineEdit.setClearButtonEnabled(True)
+        if echo_mode:
+            self.lineEdit.setEchoMode(echo_mode)
         self.hBoxLayout.addWidget(self.lineEdit)
         self.hBoxLayout.addSpacing(16)
 
@@ -69,6 +71,16 @@ class ChatSettingsTab(ScrollArea):
         self.modelNameCard.lineEdit.setText(settings.model_name)
         self.modelNameCard.lineEdit.editingFinished.connect(self._ModelNameChanged)
 
+        self.apiKeyCard = _LineEditSettingCard(
+            FIF.FLAG,
+            self.tr("API Key"),
+            self.tr("Optional: leave empty for local LLMs"),
+            echo_mode=QLineEdit.EchoMode.Password,
+            parent=self.apiGroup
+        )
+        self.apiKeyCard.lineEdit.setText(settings.api_key)
+        self.apiKeyCard.lineEdit.editingFinished.connect(self._ApiKeyChanged)
+
         # Prompt Settings group
         self.promptGroup = SettingCardGroup(self.tr('Prompt'), self.scrollWidget)
 
@@ -111,6 +123,7 @@ class ChatSettingsTab(ScrollArea):
         # Add cards to groups
         self.apiGroup.addSettingCard(self.apiUrlCard)
         self.apiGroup.addSettingCard(self.modelNameCard)
+        self.apiGroup.addSettingCard(self.apiKeyCard)
 
         self.promptGroup.addSettingCard(self.systemPromptCard)
 
@@ -133,6 +146,10 @@ class ChatSettingsTab(ScrollArea):
 
     def _ModelNameChanged(self):
         settings.model_name = self.modelNameCard.lineEdit.text().strip()
+        settings.save_settings()
+
+    def _ApiKeyChanged(self):
+        settings.api_key = self.apiKeyCard.lineEdit.text().strip()
         settings.save_settings()
 
     def _SystemPromptChanged(self):

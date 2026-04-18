@@ -94,6 +94,7 @@ api_url = "http://localhost:18789/v1/"
 model_name = ""
 system_prompt = ""
 chat_on = True
+api_key = ""
 
 def init():
     # computer system ==================================================
@@ -230,7 +231,7 @@ def init_settings():
 
     global gravity, fixdragspeedx, fixdragspeedy, tunable_scale, scale_dict, volume, \
            language_code, on_top_hint, default_pet, defaultAct, themeColor, minipet_scale, \
-           toaster_on, usertag_dict, auto_lock, bubble_on
+           toaster_on, usertag_dict, auto_lock, bubble_on, api_url, model_name, system_prompt, chat_on, api_key
 
     # check json file integrity
     try:
@@ -321,13 +322,14 @@ def init_settings():
         #=====================================================
 
         # v0.7.8 Chat settings
-        global api_url, model_name, system_prompt, chat_on
+        global api_url, model_name, system_prompt, chat_on, api_key
         api_url = data_params.get('api_url', "http://localhost:18789/v1/")
         if not api_url.endswith('/'):
             api_url += '/'
         model_name = data_params.get('model_name', "")
         system_prompt = data_params.get('system_prompt', "")
         chat_on = data_params.get('chat_on', True)
+        api_key = data_params.get('api_key', "")
         #=====================================================
 
     else:
@@ -354,13 +356,14 @@ def init_settings():
         model_name = ""
         system_prompt = ""
         chat_on = True
+        api_key = ""
     check_locale()
     save_settings()
 
 def save_settings():
     global file_path, set_fall, gravity, fixdragspeedx, fixdragspeedy, scale_dict, volume, \
            language_code, on_top_hint, default_pet, defaultAct, themeColor, minipet_scale, \
-           toaster_on, usertag_dict, auto_lock, bubble_on, api_url, model_name, system_prompt, chat_on
+           toaster_on, usertag_dict, auto_lock, bubble_on, api_url, model_name, system_prompt, chat_on, api_key
 
     data_js = {'gravity':gravity,
                'set_fall': set_fall,
@@ -377,6 +380,7 @@ def save_settings():
                'model_name':model_name,
                'system_prompt':system_prompt,
                'chat_on':chat_on,
+               'api_key':api_key,
                'default_pet':default_pet,
                'defaultAct':defaultAct,
                'language_code':language_code,

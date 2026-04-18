@@ -21,19 +21,12 @@ class ChatWorker(QRunnable):
     Uses httpx for HTTP requests (lighter than OpenAI SDK).
     """
     
-    def __init__(self, messages, api_url, model_name):
-        """
-        Initialize ChatWorker with API parameters.
-        
-        Args:
-            messages: List of message dicts [{"role": "user", "content": "..."}]
-            api_url: Base URL for API (e.g., "http://localhost:1234/v1/")
-            model_name: Model identifier (e.g., "gpt-3.5-turbo")
-        """
+    def __init__(self, messages, api_url, model_name, api_key=""):
         super().__init__()
         self.messages = messages
         self.api_url = api_url
         self.model_name = model_name
+        self.api_key = api_key
         self.signals = ChatWorkerSignals()
     
     def run(self):
@@ -44,6 +37,9 @@ class ChatWorker(QRunnable):
         Emits response_received on success, error_occurred on failure.
         """
         try:
+            headers = {}
+            if self.api_key:
+                headers["Authorization"] = f"Bearer {self.api_key}"
             with httpx.Client(timeout=30.0) as client:
                 url = f"{self.api_url}chat/completions"
                 payload = {
@@ -51,7 +47,7 @@ class ChatWorker(QRunnable):
                     "messages": self.messages,
                     "stream": False
                 }
-                response = client.post(url, json=payload)
+                response = client.post(url, json=payload, headers=headers)
                 response.raise_for_status()
                 data = response.json()
                 content = data["choices"][0]["message"]["content"]

@@ -1,11 +1,14 @@
 # coding:utf-8
-from PySide6.QtCore import Qt, Signal
+from PySide6.QtCore import Qt, Signal, QThreadPool
 from PySide6.QtGui import QTextCursor
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QTextEdit, QSizePolicy
 from qfluentwidgets import (
-    PushButton, LineEdit, CaptionLabel,
+    PushButton, LineEdit, CaptionLabel, TransparentToolButton,
     FluentIcon as FIF, isDarkTheme,
 )
+
+import DyberPet.settings as settings
+from DyberPet.ChatPanel.ChatWorker import ChatWorker
 
 MAX_CHAT_HISTORY = 100
 
@@ -93,9 +96,12 @@ class ChatPanel(QWidget):
 
 class ChatMainWindow(QWidget):
 
+    open_settings = Signal()
+
     def __init__(self, screens=None):
         super().__init__()
         self.screens = screens
+        self._thread_pool = QThreadPool()
         self._init_ui()
 
     def _init_ui(self):
@@ -104,15 +110,68 @@ class ChatMainWindow(QWidget):
         self.setWindowFlags(
             Qt.WindowType.Window
             | Qt.WindowType.WindowStaysOnTopHint
-            | Qt.WindowType.CustomizeWindowHint
+            | Qt.WindowType.WindowCloseButtonHint
             | Qt.WindowType.WindowTitleHint
         )
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
 
+        # Toolbar with settings button
+        toolbar = QHBoxLayout()
+        toolbar.setContentsMargins(8, 4, 8, 0)
+        self.settings_btn = TransparentToolButton(FIF.SETTING, self)
+        self.settings_btn.setToolTip(self.tr("Chat Settings"))
+        self.settings_btn.clicked.connect(self._on_settings_clicked)
+        toolbar.addStretch()
+        toolbar.addWidget(self.settings_btn)
+        layout.addLayout(toolbar)
+
         self.chat_panel = ChatPanel(self)
         layout.addWidget(self.chat_panel)
+
+        self.chat_panel.message_sent.connect(self._on_message_sent)
+
+    def _on_settings_clicked(self):
+        self.open_settings.emit()
+
+    def _on_message_sent(self, text: str):
+        """Handle user sending a message: call LLM API."""
+        if not settings.chat_on:
+            self.chat_panel.add_message("system", self.tr("Chat is disabled. Enable it in settings."))
+            return
+
+        api_url = settings.api_url
+        model_name = settings.model_name
+        api_key = settings.api_key
+        system_prompt = settings.system_prompt
+
+        # Build messages list with optional system prompt
+        messages = []
+        if system_prompt:
+            messages.append({"role": "system", "content": system_prompt})
+        messages.extend(self.chat_panel.chat_history)
+
+        # Disable input while waiting
+        self.chat_panel.set_input_enabled(False)
+        self.chat_panel.set_status(self.tr("Thinking..."))
+
+        # Create and start worker
+        worker = ChatWorker(messages, api_url, model_name, api_key)
+        worker.signals.response_received.connect(self._on_response_received)
+        worker.signals.error_occurred.connect(self._on_error_occurred)
+        self._thread_pool.start(worker)
+
+    def _on_response_received(self, content: str):
+        """Handle successful LLM response."""
+        self.chat_panel.add_message("assistant", content)
+        self.chat_panel.set_input_enabled(True)
+        self.chat_panel.set_status(self.tr("Ready"))
+
+    def _on_error_occurred(self, error_msg: str):
+        self.chat_panel.add_message("system", f"{self.tr('Error')}: {error_msg}")
+        self.chat_panel.set_input_enabled(True)
+        self.chat_panel.set_status(self.tr("Error"))
 
     def show_window(self):
         if self.isVisible():
