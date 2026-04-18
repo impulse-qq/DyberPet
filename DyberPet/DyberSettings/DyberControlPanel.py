@@ -51,11 +51,11 @@ class ControlMainWindow(FluentWindow):
                              QIcon(os.path.join(basedir, "res/icons/system/itemMod.svg")),
                              self.tr('Item MOD'))
         self.addSubInterface(self.petCardInterface,
-                              QIcon(os.path.join(basedir, "res/icons/system/minipet.svg")),
-                              self.tr('Mini-Pets'))
+                             QIcon(os.path.join(basedir, "res/icons/system/minipet.svg")),
+                             self.tr('Mini-Pets'))
         self.addSubInterface(self.chatSettingsInterface,
-                              FIF.CHAT,
-                              self.tr('Chat'))
+                             FIF.CHAT,
+                             self.tr('Chat'))
 
 
         self.navigationInterface.setExpandWidth(200)

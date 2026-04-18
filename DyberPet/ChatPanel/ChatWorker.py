@@ -39,7 +39,10 @@ class ChatWorker(QRunnable):
         try:
             headers = {}
             if self.api_key:
-                headers["Authorization"] = f"Bearer {self.api_key}"
+                key = self.api_key.strip()
+                if key.lower().startswith("bearer "):
+                    key = key[7:]
+                headers["Authorization"] = f"Bearer {key}"
             with httpx.Client(timeout=30.0) as client:
                 url = f"{self.api_url}chat/completions"
                 payload = {

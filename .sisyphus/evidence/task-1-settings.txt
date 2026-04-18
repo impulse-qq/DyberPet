@@ -1,0 +1,20 @@
+Verification command: python -c "import DyberPet.settings as s; s.init(); print(s.api_url, s.model_name, s.system_prompt, s.chat_on)"
+
+Result: PySide6 not installed in this environment - syntax verification passed only.
+
+Expected output when run with full environment:
+http://localhost:18789/v1/  True
+
+The module-level globals were added correctly (verified via syntax check and source review):
+- api_url = "http://localhost:18789/v1/" (line 93)
+- model_name = "" (line 94)
+- system_prompt = "" (line 95)
+- chat_on = True (line 96)
+
+URL normalization added: if not api_url.endswith('/'): api_url += '/'
+
+init_settings() reads these with data_params.get() pattern (lines 323-330)
+save_settings() writes these to data_js dict (lines 376-379)
+Default values set in else clause (lines 353-356)
+
+Git status: ready for commit

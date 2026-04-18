@@ -1,0 +1,41 @@
+=== VERIFICATION EVIDENCE: Add Chat Menu Action ===
+
+1. Chat action grep verification:
+372:    show_chat = Signal(name='show_chat')
+1017:            Action(FIF.CHAT, self.tr('Chat'), triggered=self._show_chat),
+1686:    def _show_chat(self):
+1687:        self.show_chat.emit()
+
+2. Menu action count verification:
+863:        #self.menu.addAction(Action(FIF.POWER_BUTTON, self.tr('Exit'), triggered=self.quit))
+1014:            #Action(FIF.MENU, self.tr('More Options'), triggered=self._show_right_menu),
+1015:            Action(QIcon(os.path.join(basedir,'res/icons/dashboard.svg')), self.tr('Dashboard'), triggered=self._show_dashboard),
+1016:            Action(QIcon(os.path.join(basedir,'res/icons/SystemPanel.png')), self.tr('System'), triggered=self._show_controlPanel),
+1017:            Action(FIF.CHAT, self.tr('Chat'), triggered=self._show_chat),
+1027:            Action(FIF.POWER_BUTTON, self.tr('Exit'), triggered=self.quit),
+
+3. Lines 1013-1028 (menu context):
+        self.StatMenu.addActions([
+            #Action(FIF.MENU, self.tr('More Options'), triggered=self._show_right_menu),
+            Action(QIcon(os.path.join(basedir,'res/icons/dashboard.svg')), self.tr('Dashboard'), triggered=self._show_dashboard),
+            Action(QIcon(os.path.join(basedir,'res/icons/SystemPanel.png')), self.tr('System'), triggered=self._show_controlPanel),
+            Action(FIF.CHAT, self.tr('Chat'), triggered=self._show_chat),
+        ])
+        self.StatMenu.addSeparator()
+
+        self.StatMenu.addMenu(self.act_menu)
+        self.StatMenu.addMenu(self.companion_menu)
+        self.StatMenu.addMenu(self.change_menu)
+        self.StatMenu.addSeparator()
+        
+        self.StatMenu.addActions([
+            Action(FIF.POWER_BUTTON, self.tr('Exit'), triggered=self.quit),
+        ])
+
+4. Handler method:
+
+    def _show_chat(self):
+        self.show_chat.emit()
+
+    def _show_dashboard(self):
+        self.show_dashboard.emit()

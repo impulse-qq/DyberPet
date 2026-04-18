@@ -1,0 +1,23 @@
+{
+  "active_plan": "/home/impulse/workspace/railgun/DyberPet/.sisyphus/plans/openclaw-chat.md",
+  "started_at": "2026-04-18T18:06:52.154Z",
+  "session_ids": [
+    "ses_25e4fae43ffe2BlaEsL1bpzqbC"
+  ],
+  "session_origins": {
+    "ses_25e4fae43ffe2BlaEsL1bpzqbC": "direct"
+  },
+  "plan_name": "openclaw-chat",
+  "agent": "atlas",
+  "task_sessions": {
+    "todo:1": {
+      "task_key": "todo:1",
+      "task_label": "1",
+      "task_title": "Add chat settings globals to settings.py",
+      "session_id": "ses_25e2e58a6ffeecssXDgmHWhPAg",
+      "agent": "Sisyphus-Junior",
+      "category": "unspecified-high",
+      "updated_at": "2026-04-18T18:22:20.528Z"
+    }
+  }
+}

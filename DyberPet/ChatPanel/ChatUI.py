@@ -3,7 +3,7 @@ from PySide6.QtCore import Qt, Signal, QThreadPool
 from PySide6.QtGui import QTextCursor
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QTextEdit, QSizePolicy
 from qfluentwidgets import (
-    PushButton, LineEdit, CaptionLabel, TransparentToolButton,
+    PushButton, LineEdit, CaptionLabel,
     FluentIcon as FIF, isDarkTheme,
 )
 
@@ -96,8 +96,6 @@ class ChatPanel(QWidget):
 
 class ChatMainWindow(QWidget):
 
-    open_settings = Signal()
-
     def __init__(self, screens=None):
         super().__init__()
         self.screens = screens
@@ -117,23 +115,11 @@ class ChatMainWindow(QWidget):
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
 
-        # Toolbar with settings button
-        toolbar = QHBoxLayout()
-        toolbar.setContentsMargins(8, 4, 8, 0)
-        self.settings_btn = TransparentToolButton(FIF.SETTING, self)
-        self.settings_btn.setToolTip(self.tr("Chat Settings"))
-        self.settings_btn.clicked.connect(self._on_settings_clicked)
-        toolbar.addStretch()
-        toolbar.addWidget(self.settings_btn)
-        layout.addLayout(toolbar)
-
         self.chat_panel = ChatPanel(self)
         layout.addWidget(self.chat_panel)
 
+        # Connect chat panel signals
         self.chat_panel.message_sent.connect(self._on_message_sent)
-
-    def _on_settings_clicked(self):
-        self.open_settings.emit()
 
     def _on_message_sent(self, text: str):
         """Handle user sending a message: call LLM API."""
@@ -169,7 +155,8 @@ class ChatMainWindow(QWidget):
         self.chat_panel.set_status(self.tr("Ready"))
 
     def _on_error_occurred(self, error_msg: str):
-        self.chat_panel.add_message("system", f"{self.tr('Error')}: {error_msg}")
+        """Handle LLM API error."""
+        self.chat_panel.add_message("system", f"Error: {error_msg}")
         self.chat_panel.set_input_enabled(True)
         self.chat_panel.set_status(self.tr("Error"))
 

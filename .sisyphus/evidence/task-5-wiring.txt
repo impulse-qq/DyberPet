@@ -1,0 +1,19 @@
+=== TASK 5 VERIFICATION: Wire ChatPanel signals ===
+
+--- run_DyberPet.py changes ---
+Line 17-18: Added ChatPanel import
+  from DyberPet.ChatPanel.ChatUI import ChatMainWindow
+
+Line 76-77: Added ChatPanel instantiation
+  self.chat_panel = ChatMainWindow(screens=screens)
+
+Line 118: Added signal connection
+  self.p.show_chat.connect(self.chat_panel.show_window)
+
+--- DyberPet/DyberPet.py changes ---
+Line 372: Added show_chat signal
+  show_chat = Signal(name='show_chat')
+
+--- grep verification ---
+/home/impulse/workspace/railgun/DyberPet/run_DyberPet.py:118:        self.p.show_chat.connect(self.chat_panel.show_window)
+/home/impulse/workspace/railgun/DyberPet/DyberPet/DyberPet.py:372:    show_chat = Signal(name='show_chat')
