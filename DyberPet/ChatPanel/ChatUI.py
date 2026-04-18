@@ -77,7 +77,12 @@ class ChatPanel(QWidget):
         while len(self.chat_history) > MAX_CHAT_HISTORY:
             self.chat_history.pop(0)
 
-        prefix = self.tr("You") if role == "user" else self.tr("Pet")
+        if role == "user":
+            prefix = self.tr("You")
+        elif role == "system":
+            prefix = self.tr("System")
+        else:
+            prefix = settings.chat_pet_name or settings.petname or self.tr("Pet")
         self.message_display.append(f"<b>{prefix}:</b> {content}")
         self.message_display.moveCursor(QTextCursor.MoveOperation.End)
 

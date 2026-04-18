@@ -1,45 +1,39 @@
 # coding:utf-8
 from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QWidget, QLabel, QVBoxLayout, QLineEdit
-
+from PySide6.QtWidgets import (
+    QWidget, QVBoxLayout, QLineEdit, QTextEdit,
+)
 from qfluentwidgets import (
     SettingCardGroup, SwitchSettingCard, ExpandLayout,
-    FluentIcon as FIF, TextEdit, ScrollArea, SettingCard,
+    FluentIcon as FIF, ScrollArea, SettingCard,
 )
 
 import DyberPet.settings as settings
 
 
-class _LineEditSettingCard(SettingCard):
-    """Simple setting card with a LineEdit for text input."""
+class _PromptSettingCard(SettingCard):
+    """SettingCard with a QTextEdit below the title row."""
 
-    def __init__(self, icon, title, content, echo_mode=None, parent=None):
-        super().__init__(icon, title, content, parent)
-        self.lineEdit = QLineEdit(self)
-        self.lineEdit.setFixedWidth(260)
-        self.lineEdit.setClearButtonEnabled(True)
-        if echo_mode:
-            self.lineEdit.setEchoMode(echo_mode)
-        self.hBoxLayout.addWidget(self.lineEdit)
+    def __init__(self, icon, title, desc, parent=None):
+        super().__init__(icon, title, desc, parent)
+        self.text_edit = QTextEdit(self)
+        self.text_edit.setFixedHeight(80)
+        self.text_edit.setPlaceholderText(desc)
+
         self.hBoxLayout.addSpacing(16)
 
+        self._text_layout = QVBoxLayout()
+        self._text_layout.setContentsMargins(48, 0, 16, 12)
+        self._text_layout.addWidget(self.text_edit)
 
-class _TextEditSettingCard(SettingCard):
-    """Simple setting card with a multi-line TextEdit for longer text input."""
-
-    def __init__(self, icon, title, content, parent=None):
-        super().__init__(icon, title, content, parent)
-        self.textEdit = TextEdit(self)
-        self.textEdit.setFixedHeight(80)
-        self.textEdit.setPlaceholderText(content)
-        self.vBoxLayout = QVBoxLayout(self)
-        self.vBoxLayout.setContentsMargins(48, 0, 16, 16)
-        self.vBoxLayout.addSpacing(8)
-        self.vBoxLayout.addWidget(self.textEdit)
+        outer = QVBoxLayout(self)
+        outer.setContentsMargins(0, 0, 0, 0)
+        outer.setSpacing(0)
+        outer.addLayout(self.hBoxLayout)
+        outer.addLayout(self._text_layout)
 
 
 class ChatSettingsTab(ScrollArea):
-    """Chat settings tab widget."""
 
     def __init__(self, parent=None):
         super().__init__(parent=parent)
@@ -47,51 +41,55 @@ class ChatSettingsTab(ScrollArea):
         self.scrollWidget = QWidget()
         self.expandLayout = ExpandLayout(self.scrollWidget)
 
-        # Header label
-        self.settingLabel = QLabel(self.tr("Chat Settings"), self)
-
         # API Settings group
         self.apiGroup = SettingCardGroup(self.tr('API'), self.scrollWidget)
 
-        self.apiUrlCard = _LineEditSettingCard(
-            FIF.LINK,
-            self.tr("API URL"),
+        self.apiUrlCard = self._make_line_edit_card(
+            FIF.LINK, self.tr("API URL"),
             self.tr("OpenAI-compatible API endpoint"),
-            parent=self.apiGroup
+            self.apiGroup
         )
         self.apiUrlCard.lineEdit.setText(settings.api_url)
         self.apiUrlCard.lineEdit.editingFinished.connect(self._ApiUrlChanged)
 
-        self.modelNameCard = _LineEditSettingCard(
-            FIF.ROBOT,
-            self.tr("Model Name"),
-            self.tr("Model identifier for the chat API"),
-            parent=self.apiGroup
+        self.modelNameCard = self._make_line_edit_card(
+            FIF.ROBOT, self.tr("Model Name"),
+            self.tr("e.g. openclaw/default"),
+            self.apiGroup
         )
         self.modelNameCard.lineEdit.setText(settings.model_name)
         self.modelNameCard.lineEdit.editingFinished.connect(self._ModelNameChanged)
 
-        self.apiKeyCard = _LineEditSettingCard(
-            FIF.FLAG,
-            self.tr("API Key"),
+        self.apiKeyCard = self._make_line_edit_card(
+            FIF.FLAG, self.tr("API Key"),
             self.tr("Optional: leave empty for local LLMs"),
-            echo_mode=QLineEdit.EchoMode.Password,
-            parent=self.apiGroup
+            self.apiGroup,
+            echo_mode=QLineEdit.EchoMode.Password
         )
         self.apiKeyCard.lineEdit.setText(settings.api_key)
         self.apiKeyCard.lineEdit.editingFinished.connect(self._ApiKeyChanged)
 
+        # Display Settings group
+        self.displayGroup = SettingCardGroup(self.tr('Display'), self.scrollWidget)
+
+        self.petNameCard = self._make_line_edit_card(
+            FIF.PEOPLE, self.tr("Pet Name"),
+            self.tr("Name shown for the pet in chat (default: uses character name)"),
+            self.displayGroup
+        )
+        self.petNameCard.lineEdit.setText(settings.chat_pet_name)
+        self.petNameCard.lineEdit.editingFinished.connect(self._PetNameChanged)
+
         # Prompt Settings group
         self.promptGroup = SettingCardGroup(self.tr('Prompt'), self.scrollWidget)
 
-        self.systemPromptCard = _TextEditSettingCard(
-            FIF.EDIT,
-            self.tr("System Prompt"),
+        self.systemPromptCard = _PromptSettingCard(
+            FIF.EDIT, self.tr("System Prompt"),
             self.tr("System prompt sent with each message"),
-            parent=self.promptGroup
+            self.promptGroup
         )
-        self.systemPromptCard.textEdit.setPlainText(settings.system_prompt)
-        self.systemPromptCard.textEdit.textChanged.connect(self._SystemPromptChanged)
+        self.systemPromptCard.text_edit.setPlainText(settings.system_prompt)
+        self.systemPromptCard.text_edit.textChanged.connect(self._SystemPromptChanged)
 
         # Chat Toggle group
         self.chatGroup = SettingCardGroup(self.tr('Chat'), self.scrollWidget)
@@ -102,28 +100,39 @@ class ChatSettingsTab(ScrollArea):
             self.tr("Turn on/off the chat panel"),
             parent=self.chatGroup
         )
-        if settings.chat_on:
-            self.chatOnCard.setChecked(True)
-        else:
-            self.chatOnCard.setChecked(False)
+        self.chatOnCard.setChecked(settings.chat_on)
         self.chatOnCard.switchButton.checkedChanged.connect(self._ChatOnChanged)
 
         self.__initWidget()
 
+    # -- factory helpers --
+
+    @staticmethod
+    def _make_line_edit_card(icon, title, desc, parent, echo_mode=None):
+        card = SettingCard(icon, title, desc, parent)
+        card.lineEdit = QLineEdit(card)
+        card.lineEdit.setFixedWidth(260)
+        card.lineEdit.setClearButtonEnabled(True)
+        if echo_mode is not None:
+            card.lineEdit.setEchoMode(echo_mode)
+        card.hBoxLayout.addWidget(card.lineEdit)
+        card.hBoxLayout.addSpacing(16)
+        return card
+
     def __initWidget(self):
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        self.setViewportMargins(0, 75, 0, 20)
+        self.setViewportMargins(0, 10, 0, 20)
         self.setWidget(self.scrollWidget)
         self.setWidgetResizable(True)
         self.__initLayout()
 
     def __initLayout(self):
-        self.settingLabel.move(50, 20)
-
         # Add cards to groups
         self.apiGroup.addSettingCard(self.apiUrlCard)
         self.apiGroup.addSettingCard(self.modelNameCard)
         self.apiGroup.addSettingCard(self.apiKeyCard)
+
+        self.displayGroup.addSettingCard(self.petNameCard)
 
         self.promptGroup.addSettingCard(self.systemPromptCard)
 
@@ -134,8 +143,11 @@ class ChatSettingsTab(ScrollArea):
         self.expandLayout.setContentsMargins(60, 10, 60, 0)
 
         self.expandLayout.addWidget(self.apiGroup)
+        self.expandLayout.addWidget(self.displayGroup)
         self.expandLayout.addWidget(self.promptGroup)
         self.expandLayout.addWidget(self.chatGroup)
+
+    # -- change handlers --
 
     def _ApiUrlChanged(self):
         url = self.apiUrlCard.lineEdit.text().strip()
@@ -152,13 +164,14 @@ class ChatSettingsTab(ScrollArea):
         settings.api_key = self.apiKeyCard.lineEdit.text().strip()
         settings.save_settings()
 
+    def _PetNameChanged(self):
+        settings.chat_pet_name = self.petNameCard.lineEdit.text().strip()
+        settings.save_settings()
+
     def _SystemPromptChanged(self):
-        settings.system_prompt = self.systemPromptCard.textEdit.toPlainText()
+        settings.system_prompt = self.systemPromptCard.text_edit.toPlainText()
         settings.save_settings()
 
     def _ChatOnChanged(self, isChecked):
-        if isChecked:
-            settings.chat_on = True
-        else:
-            settings.chat_on = False
+        settings.chat_on = isChecked
         settings.save_settings()

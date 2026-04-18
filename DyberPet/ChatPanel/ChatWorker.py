@@ -1,25 +1,13 @@
-"""
-ChatWorker module for LLM API calls.
-
-Uses QRunnable + QThreadPool pattern for non-blocking API requests.
-"""
 from PySide6.QtCore import QRunnable, Signal, QObject
 import httpx
 
 
 class ChatWorkerSignals(QObject):
-    """Signals for ChatWorker to communicate with main thread."""
     response_received = Signal(str)
     error_occurred = Signal(str)
 
 
 class ChatWorker(QRunnable):
-    """
-    QRunnable worker for making LLM API calls.
-    
-    Runs in thread pool to avoid blocking main UI thread.
-    Uses httpx for HTTP requests (lighter than OpenAI SDK).
-    """
     
     def __init__(self, messages, api_url, model_name, api_key=""):
         super().__init__()
@@ -30,12 +18,6 @@ class ChatWorker(QRunnable):
         self.signals = ChatWorkerSignals()
     
     def run(self):
-        """
-        Execute API call in thread pool.
-        
-        Creates httpx.Client inside run() for thread safety.
-        Emits response_received on success, error_occurred on failure.
-        """
         try:
             headers = {}
             if self.api_key:
