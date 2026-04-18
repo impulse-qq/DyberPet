@@ -369,6 +369,7 @@ class PetWidget(QWidget):
     show_controlPanel = Signal(name='show_controlPanel')
 
     show_dashboard = Signal(name='show_dashboard')
+    show_chat = Signal(name='show_chat')
     hp_updated = Signal(int, name='hp_updated')
     fv_updated = Signal(int, int, name='fv_updated')
 
